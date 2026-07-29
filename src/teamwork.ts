@@ -26,7 +26,7 @@ function config() {
 function normalizeSiteUrl(input: string): string {
   const trimmed = input.trim();
   const withScheme = /^https?:\/\//i.test(trimmed)
-    ? trimmed
+    ? trimmed.replace(/^http:\/\//i, "https://")
     : `https://${trimmed}`;
   try {
     // Keep only the origin (scheme + host), dropping any trailing path/query/hash.
