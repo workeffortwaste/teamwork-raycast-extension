@@ -12,8 +12,19 @@ import {
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { useEffect, useState } from "react";
-import { addRecentTask, getRecentTasks, removeRecentTask, updateRecentTask } from "./recent";
-import { fetchTask, searchTasks, startTimer, taskUrl } from "./teamwork";
+import {
+  addRecentTask,
+  getRecentTasks,
+  removeRecentTask,
+  updateRecentTask,
+} from "./recent";
+import {
+  fetchTask,
+  isTimerAlreadyRunningError,
+  searchTasks,
+  startTimer,
+  taskUrl,
+} from "./teamwork";
 import type { TeamworkTask } from "./types";
 
 export default function Command() {
@@ -52,12 +63,19 @@ export default function Command() {
     } catch (error) {
       toast.style = Toast.Style.Failure;
       toast.title = "Could not start timer";
-      toast.message = error instanceof Error ? error.message : String(error);
+      toast.message = isTimerAlreadyRunningError(error)
+        ? "A timer is already running on this task."
+        : error instanceof Error
+          ? error.message
+          : String(error);
     }
   }
 
   async function refreshRecent(task: TeamworkTask) {
-    const toast = await showToast({ style: Toast.Style.Animated, title: "Refreshing task…" });
+    const toast = await showToast({
+      style: Toast.Style.Animated,
+      title: "Refreshing task…",
+    });
     try {
       const fresh = await fetchTask(task.id);
       if (fresh) {
@@ -81,7 +99,11 @@ export default function Command() {
     setRecents(await getRecentTasks());
   }
 
-  const recentLimit = Math.max(1, parseInt(getPreferenceValues<{ recentLimit: string }>().recentLimit, 10) || 5);
+  const recentLimit = Math.max(
+    1,
+    parseInt(getPreferenceValues<{ recentLimit: string }>().recentLimit, 10) ||
+      5,
+  );
   const showRecents =
     query.length === 0 && filter === "active" && recents.length > 0;
   return (
@@ -198,7 +220,7 @@ function TaskItem({
             <Action
               title="Refresh Task"
               icon={Icon.ArrowClockwise}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
+              shortcut={Keyboard.Shortcut.Common.Refresh}
               onAction={() => onRefresh(task)}
             />
           ) : null}
