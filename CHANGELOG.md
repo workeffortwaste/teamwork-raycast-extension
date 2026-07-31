@@ -12,3 +12,6 @@
 - **Resume Timer** command shows a list of all paused timers to choose from
 - **Stop and Log Timer** command shows all timers (running and paused) to choose from
 - Automatic resume of paused timers when starting a task that already has one
+- Configurable recent tasks limit (default: 5) via extension preferences
+- **Refresh Task** action on recent items to sync latest name, status, and due date from Teamwork
+- **Remove from Recents** action to manually remove a task from the recents list

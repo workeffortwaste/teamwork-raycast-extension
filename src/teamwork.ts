@@ -84,6 +84,33 @@ async function getMyUserId(): Promise<number> {
   return cachedUserId ?? 0;
 }
 
+export async function fetchTask(taskId: number): Promise<TeamworkTask | undefined> {
+  const params = new URLSearchParams({
+    include: "projects,tasklists",
+    "fields[tasks]": "id,projectId,tasklistId,name,status,dueDate",
+    "fields[tasklists]": "id,projectId,name",
+  });
+  const data = await request<{
+    task?: Record<string, unknown>;
+    included?: Included;
+  }>(`/projects/api/v3/tasks/${taskId}.json?${params}`);
+  const raw = data.task;
+  if (!raw) return undefined;
+  const id = Number(raw.id);
+  const tasklistId = Number(raw.tasklistId ?? 0);
+  const tasklist = data.included?.tasklists?.[String(tasklistId)];
+  const projectId = Number(tasklist?.projectId ?? 0);
+  return {
+    id,
+    name: String(raw.name ?? `Task ${id}`),
+    projectId,
+    projectName: relatedName(data.included?.projects, projectId),
+    tasklistName: relatedName(data.included?.tasklists, tasklistId),
+    dueDate: typeof raw.dueDate === "string" ? raw.dueDate : undefined,
+    status: typeof raw.status === "string" ? raw.status : undefined,
+  };
+}
+
 export async function searchTasks(
   searchTerm = "",
   completed = false,

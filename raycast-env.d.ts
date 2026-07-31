@@ -11,7 +11,9 @@ type ExtensionPreferences = {
   /** Teamwork Site URL - For example: https://yourcompany.teamwork.com */
   "siteUrl": string,
   /** Teamwork API Token - A Teamwork bearer token/API token */
-  "apiToken": string
+  "apiToken": string,
+  /** Recent Tasks Limit - Number of recent tasks to show (default: 5) */
+  "recentLimit": string
 }
 
 /** Preferences accessible in all the extension's commands */

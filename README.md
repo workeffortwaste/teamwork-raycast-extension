@@ -43,6 +43,9 @@ Find and manage tasks assigned to you.
 
 **Recent Tasks:**
 - Your recently accessed/timed tasks appear at the top for quick access
+- Limit controlled by the **Recent Tasks Limit** preference (default: 5)
+- **Refresh Task** (`⌘R`) — fetch the latest task data from Teamwork to update name, status, and due date
+- **Remove from Recents** (`⌃X`) — remove a task from the recents list
 
 ### Timer Menu Bar
 

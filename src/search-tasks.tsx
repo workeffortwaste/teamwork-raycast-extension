@@ -6,13 +6,14 @@ import {
   Keyboard,
   List,
   Toast,
+  getPreferenceValues,
   open,
   showToast,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { useEffect, useState } from "react";
-import { addRecentTask, getRecentTasks } from "./recent";
-import { searchTasks, startTimer, taskUrl } from "./teamwork";
+import { addRecentTask, getRecentTasks, removeRecentTask, updateRecentTask } from "./recent";
+import { fetchTask, searchTasks, startTimer, taskUrl } from "./teamwork";
 import type { TeamworkTask } from "./types";
 
 export default function Command() {
@@ -55,6 +56,32 @@ export default function Command() {
     }
   }
 
+  async function refreshRecent(task: TeamworkTask) {
+    const toast = await showToast({ style: Toast.Style.Animated, title: "Refreshing task…" });
+    try {
+      const fresh = await fetchTask(task.id);
+      if (fresh) {
+        await updateRecentTask(fresh);
+        setRecents(await getRecentTasks());
+        toast.style = Toast.Style.Success;
+        toast.title = "Task refreshed";
+      } else {
+        toast.style = Toast.Style.Failure;
+        toast.title = "Task not found";
+      }
+    } catch (error) {
+      toast.style = Toast.Style.Failure;
+      toast.title = "Could not refresh task";
+      toast.message = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  async function removeRecent(task: TeamworkTask) {
+    await removeRecentTask(task.id);
+    setRecents(await getRecentTasks());
+  }
+
+  const recentLimit = Math.max(1, parseInt(getPreferenceValues<{ recentLimit: string }>().recentLimit, 10) || 5);
   const showRecents =
     query.length === 0 && filter === "active" && recents.length > 0;
   return (
@@ -84,12 +111,14 @@ export default function Command() {
     >
       {showRecents ? (
         <List.Section title="Recent">
-          {recents.map((task) => (
+          {recents.slice(0, recentLimit).map((task) => (
             <TaskItem
               key={`recent-${task.id}`}
               task={task}
               onOpen={remember}
               onStart={beginTimer}
+              onRefresh={refreshRecent}
+              onRemove={removeRecent}
             />
           ))}
         </List.Section>
@@ -114,10 +143,14 @@ function TaskItem({
   task,
   onOpen,
   onStart,
+  onRefresh,
+  onRemove,
 }: {
   task: TeamworkTask;
   onOpen: (task: TeamworkTask) => void;
   onStart: (task: TeamworkTask) => void;
+  onRefresh?: (task: TeamworkTask) => void;
+  onRemove?: (task: TeamworkTask) => void;
 }) {
   const accessories: List.Item.Accessory[] = [];
   if (task.dueDate)
@@ -161,6 +194,23 @@ function TaskItem({
             content={task.name}
             shortcut={Keyboard.Shortcut.Common.Copy}
           />
+          {onRefresh ? (
+            <Action
+              title="Refresh Task"
+              icon={Icon.ArrowClockwise}
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+              onAction={() => onRefresh(task)}
+            />
+          ) : null}
+          {onRemove ? (
+            <Action
+              title="Remove from Recents"
+              icon={Icon.Trash}
+              style={Action.Style.Destructive}
+              shortcut={{ modifiers: ["ctrl"], key: "x" }}
+              onAction={() => onRemove(task)}
+            />
+          ) : null}
         </ActionPanel>
       }
     />
